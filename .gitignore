@@ -15,3 +15,8 @@ wheels/
 # Vector database
 vector_db.npz
 vector_meta.json
+
+# Documents
+documents/*
+!.gitkeep
+
