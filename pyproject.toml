@@ -7,7 +7,13 @@ requires-python = ">=3.13"
 dependencies = [
     "google-cloud-aiplatform>=1.138.0",
     "google-genai>=1.64.0",
-    "markitdown>=0.1.5",
+    "markitdown[all]>=0.1.5",
     "numpy>=2.4.2",
     "python-dotenv>=1.2.1",
 ]
+
+[project.scripts]
+multi-modal-rag = "multi_modal_rag:main"
+
+[tool.uv]
+package = true

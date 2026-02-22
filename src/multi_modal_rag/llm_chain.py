@@ -5,18 +5,24 @@ from google import genai
 
 def call_gemini(query, context_items):
     """
-    Calls Gemini 1.5 Pro with the user's text query and the retrieved multi-modal context chunks.
+    Calls Gemini 2.5 Flash with the user's text query and the retrieved multi-modal context chunks.
     context_items is a list of metadata dicts returned from vector_store.py
     """
 
-    # We use Google GenAI SDK for Gemini 1.5 Pro
-    # Ensure GEMINI_API_KEY is available in the environment
+    # We use Google GenAI SDK for Gemini 2.5 Flash via AI Studio (Developer API).
+    # We temporarily hide GOOGLE_CLOUD_PROJECT from the actual environment inside this function
+    # to prevent the `genai` client from auto-routing to Vertex AI (which caused the 404 error).
+    backup_project = os.environ.pop("GOOGLE_CLOUD_PROJECT", None)
+
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
 
+    if backup_project:
+        os.environ["GOOGLE_CLOUD_PROJECT"] = backup_project
+
     contents = [
         "You are an intelligent Assistant with access to a multimodal database.",
-        "Below is context retrieved from various files (Word, Excel, PPT, Image, Video).",
+        "Below is context retrieved from various files (Word, Excel, PPT, Image, Video, Audio).",
         "Use this context to answer the user's query.",
         "--- CONTEXT START ---",
     ]
@@ -43,11 +49,13 @@ def call_gemini(query, context_items):
     contents.append("--- CONTEXT END ---")
     contents.append(f"User Query: {query}")
 
-    print("Calling Gemini 1.5 Pro...")
+    contents_str = "\n".join(contents)
+
+    print("Calling Gemini 2.5 Flash...")
     try:
         response = client.models.generate_content(
-            model="gemini-1.5-pro",
-            contents=contents,
+            model="gemini-2.5-flash",
+            contents=contents_str,
         )
         return response.text
     except Exception as e:

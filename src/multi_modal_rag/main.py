@@ -1,7 +1,10 @@
-from embedder import get_embedding, init_vertex
-from ingestion import process_files, select_files
-from llm_chain import call_gemini
-from vector_store import SimpleVectorStore
+# Multi-Modal MS Office & Media RAG System
+
+# Import local modules
+from .embedder import get_embedding, init_vertex
+from .ingestion import process_files, select_files
+from .llm_chain import call_gemini
+from .vector_store import SimpleVectorStore
 
 
 def main():
@@ -34,12 +37,42 @@ def main():
     )
     for item in processed_items:
         print(f"Embedding {item['filename']}...")
-        emb = get_embedding(item)
-        if emb is not None:
-            db.add(embedding=emb, metadata=item)
-            print(f" -> Added {item['filename']} to Vector DB.")
-        else:
-            print(f" -> Failed to embed {item['filename']}.")
+
+        # If media, embed the whole thing once
+        if item["type"] == "media":
+            emb = get_embedding(item)
+            if emb is not None:
+                db.add(embedding=emb, metadata=item)
+                print(f" -> Added {item['filename']} to Vector DB.")
+            else:
+                print(f" -> Failed to embed {item['filename']}.")
+
+        # If text, we must chunk it because Vertex AI Multimodal has a 1024 char limit
+        elif item["type"] == "text_document" and item["content"]:
+            text = item["content"]
+            chunk_size = 1000  # safely below 1024 limit
+
+            # Simple chunking by character length
+            chunks = [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
+
+            success_count = 0
+            for i, chunk in enumerate(chunks):
+                # We create a temporary item for the embedder
+                chunk_item = {
+                    "type": "text_document",
+                    "content": chunk,
+                    "path": item["path"],
+                    "filename": f"{item['filename']}_part{i + 1}",
+                }
+
+                emb = get_embedding(chunk_item)
+                if emb is not None:
+                    # We store the chunk specifically in metadata so the LLM gets the right context later
+                    db.add(embedding=emb, metadata=chunk_item)
+                    success_count += 1
+            print(
+                f" -> Added {success_count}/{len(chunks)} chunks of {item['filename']} to Vector DB."
+            )
 
     print("\n[Step 3] Ready for Queries! (Type 'quit' or 'exit' to stop)\n")
 

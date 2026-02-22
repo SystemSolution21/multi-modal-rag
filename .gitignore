@@ -11,3 +11,7 @@ wheels/
 
 # Environment variables
 .env
+
+# Vector database
+vector_db.npz
+vector_meta.json
