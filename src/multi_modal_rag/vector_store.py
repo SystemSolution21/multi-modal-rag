@@ -5,7 +5,11 @@ import numpy as np
 
 
 class SimpleVectorStore:
-    def __init__(self, filename="vector_db.npz", meta_filename="vector_meta.json"):
+    def __init__(
+        self, filename="db/vector_db.npz", meta_filename="db/vector_meta.json"
+    ):
+        # Ensure db directory exists
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         self.filename = filename
         self.meta_filename = meta_filename
         self.vectors = []
