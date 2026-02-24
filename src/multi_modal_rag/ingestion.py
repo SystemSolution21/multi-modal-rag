@@ -1,7 +1,12 @@
+"""Ingestion module for the Multi-Modal RAG system."""
+
+# Import built-in modules
 import os
 import tkinter as tk
 from tkinter import filedialog
+from typing import Any
 
+# Import third-party modules
 from markitdown import MarkItDown
 
 
@@ -36,7 +41,7 @@ def select_files():
     return list(file_paths)
 
 
-def process_files(file_paths):
+def process_files(file_paths) -> list[dict[str, Any]]:
     """
     Processes the selected files.
     - Uses MarkItDown for Office and PDF files to extract clean Markdown.
@@ -66,14 +71,17 @@ def process_files(file_paths):
                 result = md.convert(path)
                 file_item["content"] = result.text_content
                 file_item["type"] = "text_document"
+                processed_items.append(file_item)
             except Exception as e:
                 print(f"Error extracting {path}: {e}")
 
         elif ext in media_exts:
             file_item["type"] = "media"
             # We don't extract content for media, the GenAI API will handle the file directly
+            processed_items.append(file_item)
 
-        processed_items.append(file_item)
+        else:
+            print(f"Skipping unsupported file type: {file_item['filename']}")
 
     return processed_items
 

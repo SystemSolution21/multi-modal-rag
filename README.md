@@ -1,17 +1,29 @@
 # Multi-Modal RAG System for MS Office & Media
 
-This is a simple demo of a multi-modal RAG system that can handle MS Office documents, PDFs, images, audio, and video. It uses Google Vertex AI for embeddings and Google Gemini 2.5 Flash for LLMs.
+This is a simple a multi-modal RAG system that can handle MS Office documents, PDFs, images, audio, and video. It uses Google Vertex AI for embeddings and Google Gemini 2.5 Flash for LLMs.
 
-```/multi_modal_rag/
+```multi-modal-rag/
 ├── db/
 │   └── (empty, will be auto-populated)
 ├── documents/
 │   └── sample_document.txt
-├── main.py
-├── vector_store.py
-├── llm_interface.py
-├── document_processor.py
-└── requirements.txt
+│
+├── src/
+|   └── multi_modal_rag/
+|        ├── __init__.py
+|        ├── embedder.py
+|        ├── ingestion.py
+|        ├── llm_interface.py
+|        ├── main.py
+|        └── vector_store.py
+|
+├── .env.example
+├── .gitignore
+├── .python-version
+├── LICENSE.txt
+├── pyproject.toml
+├── README.md
+└── uv.lock
 ```
 
 ## Prerequisites
@@ -31,4 +43,4 @@ This is a simple demo of a multi-modal RAG system that can handle MS Office docu
    GEMINI_API_KEY=your-api-key
    ```
 
-4. Run `uv run multi-modal-rag` to start the demo.
+4. Run `uv run multi-modal-rag` to start the application.

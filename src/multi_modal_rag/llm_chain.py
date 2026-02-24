@@ -6,12 +6,12 @@ from google import genai
 def call_gemini(query, context_items):
     """
     Calls Gemini 2.5 Flash with the user's text query and the retrieved multi-modal context chunks.
-    context_items is a list of metadata dicts returned from vector_store.py
+    `context_items` is a list of metadata dicts returned from vector_store.py
     """
 
     # We use Google GenAI SDK for Gemini 2.5 Flash via AI Studio (Developer API).
     # We temporarily hide GOOGLE_CLOUD_PROJECT from the actual environment inside this function
-    # to prevent the `genai` client from auto-routing to Vertex AI (which caused the 404 error).
+    # to prevent the `genai` client from auto-routing to Vertex AI.
     backup_project = os.environ.pop("GOOGLE_CLOUD_PROJECT", None)
 
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -20,42 +20,49 @@ def call_gemini(query, context_items):
     if backup_project:
         os.environ["GOOGLE_CLOUD_PROJECT"] = backup_project
 
-    contents = [
+    prompt_parts: list = [
         "You are an intelligent Assistant with access to a multimodal database.",
-        "Below is context retrieved from various files (Word, Excel, PPT, Image, Video, Audio).",
+        "Below is context retrieved from various files (Text, Word, Excel, PPT, PDF, Image, Video, Audio).",
         "Use this context to answer the user's query.",
         "--- CONTEXT START ---",
     ]
 
     for i, item in enumerate(context_items):
         meta = item["metadata"]
-        contents.append(
+        prompt_parts.append(
             f"\n[Source {i + 1}: {meta['filename']} - Type: {meta['type']}]"
         )
 
         if meta["type"] == "text_document":
             text = meta.get("content", "")
             # Cap at 50,000 characters per context chunk to prevent giant API requests
-            contents.append(text[:50000])
+            prompt_parts.append(text[:50000])
         elif meta["type"] == "media":
-            # For media, we must pass the actual file bytes to Gemini
-            # (or use the File API if they are large, but for this demo we'll pass small images/video natively if supported,
-            # but ideally the user uploads it via FileAPI.
-            # Note: For strict RAG over video/audio, Google GenAI requires uploading via File API first.
-            contents.append(
-                f"(Media file {meta['filename']} was retrieved but is not inline. If the user asks about it, explain it's an external file)."
-            )
+            file_path = meta.get("path")
+            if file_path and os.path.exists(file_path):
+                print(f"Uploading {meta['filename']} to Gemini File API...")
+                try:
+                    # The File API is the most robust way to handle video/audio
+                    uploaded_file = client.files.upload(file=file_path)
+                    prompt_parts.append(uploaded_file)
+                except Exception as e:
+                    print(f"Could not upload {meta['filename']}: {e}")
+                    prompt_parts.append(
+                        f"(Failed to load media file: {meta['filename']})"
+                    )
+            else:
+                prompt_parts.append(
+                    f"(Media file not found at path: {meta['filename']})"
+                )
 
-    contents.append("--- CONTEXT END ---")
-    contents.append(f"User Query: {query}")
-
-    contents_str = "\n".join(contents)
+    prompt_parts.append("--- CONTEXT END ---")
+    prompt_parts.append(f"\nUser Query: {query}")
 
     print("Calling Gemini 2.5 Flash...")
     try:
+        # The generate_content function accepts contents parameter
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=contents_str,
+            model="gemini-2.5-flash", contents=prompt_parts
         )
         return response.text
     except Exception as e:

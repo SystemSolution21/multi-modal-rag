@@ -1,0 +1,5 @@
+The first rule of vector databases is persistence.
+
+The second rule is ensuring your embeddings are consistent.
+
+Tkinter is a standard GUI toolkit for Python.

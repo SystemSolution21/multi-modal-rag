@@ -13,10 +13,13 @@ wheels/
 .env
 
 # Vector database
-vector_db.npz
-vector_meta.json
+db/*
+!.gitkeep
 
 # Documents
 documents/*
 !.gitkeep
+!sample_document.txt
 
+# Todo
+ToDo.md

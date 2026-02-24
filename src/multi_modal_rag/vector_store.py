@@ -3,43 +3,74 @@ import os
 
 import numpy as np
 
+DB_DIR = "db"
+VECTORS_FILE = os.path.join(DB_DIR, "vectors.npz")
+METADATA_FILE = os.path.join(DB_DIR, "metadata.json")
 
-class SimpleVectorStore:
-    def __init__(
-        self, filename="db/vector_db.npz", meta_filename="db/vector_meta.json"
-    ):
-        # Ensure db directory exists
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        self.filename = filename
-        self.meta_filename = meta_filename
+
+class VectorStore:
+    def __init__(self):
+        """Initializes the VectorStore, trying to load an existing DB."""
         self.vectors = []
         self.metadata = []
-        self._load()
+        os.makedirs(DB_DIR, exist_ok=True)
 
-    def _load(self):
-        if os.path.exists(self.filename) and os.path.exists(self.meta_filename):
-            data = np.load(self.filename)
+    def load(self):
+        """
+        Loads the vector database from the /db directory.
+
+        Returns:
+            bool: True if loaded successfully, False otherwise.
+        """
+        if not os.path.exists(VECTORS_FILE) or not os.path.exists(METADATA_FILE):
+            print("No existing database found.")
+            return False
+
+        try:
+            print("Loading existing vector database...")
+            data = np.load(VECTORS_FILE)
             self.vectors = data["vectors"].tolist()
-            with open(self.meta_filename, "r") as f:
+            with open(METADATA_FILE, "r", encoding="utf-8") as f:
                 self.metadata = json.load(f)
 
-    def _save(self):
-        if self.vectors:
-            np.savez(self.filename, vectors=np.array(self.vectors))
-            with open(self.meta_filename, "w") as f:
+            print("Database loaded successfully.")
+            return True
+        except Exception as e:
+            print(f"Error loading database: {e}")
+            # Reset on failure
+            self.vectors = []
+            self.metadata = []
+            return False
+
+    def save(self):
+        """Saves the current vector database to the /db directory."""
+        if not self.vectors:
+            print("Nothing to save.")
+            return
+
+        print("Saving vector database...")
+        try:
+            np.savez_compressed(VECTORS_FILE, vectors=np.array(self.vectors))
+            with open(METADATA_FILE, "w", encoding="utf-8") as f:
                 json.dump(self.metadata, f, indent=4)
+            print("Database saved successfully.")
+        except Exception as e:
+            print(f"Error saving database: {e}")
 
     def add(self, embedding, metadata):
-        """Adds a single embedded vector and its related metadata."""
+        """
+        Adds a single embedded vector and its related metadata.
+        """
         if embedding is None:
             return
-        # Ensure it's a list for JSON compatibility
+
+        # Ensure it's a list for JSON/Numpy compatibility
         if isinstance(embedding, np.ndarray):
             embedding = embedding.tolist()
 
         self.vectors.append(embedding)
         self.metadata.append(metadata)
-        self._save()
+        self.save()
 
     def search(self, query_embedding, top_k=3):
         """
@@ -77,19 +108,3 @@ class SimpleVectorStore:
             )
 
         return results
-
-    def clear(self):
-        """Delete local DB"""
-        self.vectors = []
-        self.metadata = []
-        if os.path.exists(self.filename):
-            os.remove(self.filename)
-        if os.path.exists(self.meta_filename):
-            os.remove(self.meta_filename)
-
-
-if __name__ == "__main__":
-    print("Initializing local numpy DB...")
-    store = SimpleVectorStore()
-    store.clear()
-    print("Local database cleared.")
