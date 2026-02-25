@@ -21,5 +21,9 @@ documents/*
 !.gitkeep
 !sample_document.txt
 
+# logs
+logs/*
+!.gitkeep
+
 # Todo
 ToDo.md
