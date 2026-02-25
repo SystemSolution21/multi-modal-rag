@@ -1,4 +1,8 @@
-"""Ingestion module for the Multi-Modal RAG system."""
+# src/multi_modal_rag/ingestion.py
+
+"""Ingestion module for the Multi-Modal RAG system.
+This module provides functions to select and process multimodal files for indexing.
+"""
 
 # Import built-in modules
 import logging
@@ -24,7 +28,7 @@ def select_files():
     root = tk.Tk()
     root.withdraw()  # Hide the main tk window
 
-    # Try to open in the multi_modal_rag/documents directory if it exists
+    # Open in the multi_modal_rag/documents directory if it exists
     initial_dir = Path(config.DOCUMENTS_DIR)
     if not initial_dir.exists():
         initial_dir = str(config.BASE_DIR)
@@ -76,7 +80,9 @@ def process_files(file_paths) -> list[dict[str, Any]]:
 
         if ext in office_pdf_exts:
             try:
-                print(f"Extracting text from {file_item['filename']} via MarkItDown...")
+                logger.info(
+                    msg=f"Extracting text from {file_item['filename']} via MarkItDown..."
+                )
                 result = md.convert(path)
                 file_item["content"] = result.text_content
                 file_item["type"] = "text_document"

@@ -1,5 +1,11 @@
 # src/multi_modal_rag/vector_store.py
 
+"""Vector store module for the Multi-Modal RAG system.
+This module provides a simple in-memory vector store for storing and searching embeddings.
+It uses Numpy for fast vector operations and JSON for metadata storage.
+The vector store is persisted to the /db directory as vectors.npz and metadata.json.
+"""
+
 # Import built-in modules
 import json
 import logging

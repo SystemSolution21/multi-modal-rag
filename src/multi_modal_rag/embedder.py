@@ -1,18 +1,34 @@
-import os
+# src/multi_modal_rag/embedder.py
 
+"""Embedder module for the Multi-Modal RAG system.
+This module provides functions to generate embeddings for multimodal data using Vertex AI.
+"""
+
+# Import built-in modules
+import os
+from pathlib import Path
+
+# Import third-party modules
 import vertexai
 from google.cloud import speech_v1
 from vertexai.vision_models import Image, MultiModalEmbeddingModel, Video
 
+# Import local modules
+from config import config
+from utils.logger import get_app_logger
+
+# Initialize logger
+logger = get_app_logger()
+
 
 def init_vertex():
     """Initializes Vertex AI. Requires GOOGLE_CLOUD_PROJECT in environment."""
-    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
-    location = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
+    project_id = config.GOOGLE_CLOUD_PROJECT
+    location = config.GOOGLE_CLOUD_LOCATION
 
     if not project_id:
-        print(
-            "WARNING: GOOGLE_CLOUD_PROJECT environment variable not set. Vertex AI may fail to authenticate."
+        logger.warning(
+            msg="WARNING: GOOGLE_CLOUD_PROJECT environment variable not set. Vertex AI may fail to authenticate."
         )
 
     vertexai.init(project=project_id, location=location)
@@ -52,7 +68,7 @@ def transcribe_audio(file_path):
 
         return transcript if transcript else None
     except Exception as e:
-        print(f"Error transcribing audio {file_path}: {e}")
+        logger.error(msg=f"Error transcribing audio {file_path}: {e}")
         return None
 
 
@@ -72,7 +88,7 @@ def get_embedding(item):
             return None
 
     elif item["type"] == "media":
-        ext = os.path.splitext(item["path"])[1].lower()
+        ext = Path(item["path"]).suffix.lower()
 
         if ext in {".png", ".jpg", ".jpeg"}:
             img = Image.load_from_file(item["path"])
@@ -92,7 +108,7 @@ def get_embedding(item):
 
         elif ext in {".mp3", ".wav"}:
             # Transcribe audio to text, then embed
-            print(f"Transcribing audio file: {item['path']}")
+            logger.info(f"Transcribing audio file: {item['path']}")
             transcript = transcribe_audio(item["path"])
 
             if transcript:
@@ -102,11 +118,11 @@ def get_embedding(item):
                 else:
                     return None
             else:
-                print(f"Could not transcribe audio: {item['path']}")
+                logger.error(msg=f"Could not transcribe audio: {item['path']}")
                 return None
 
         else:
-            print(f"Unsupported media type for embeddings: {ext}")
+            logger.error(msg=f"Unsupported media type for embeddings: {ext}")
             return None
 
     return None
@@ -117,4 +133,4 @@ if __name__ == "__main__":
 
     load_dotenv()
     init_vertex()
-    print("Embedder module ready.")
+    logger.info(msg="Embedding module initialized.")

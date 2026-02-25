@@ -1,6 +1,23 @@
-import os
+# src/multi_modal_rag/llm_chain.py
 
+"""LLM chain module for the Multi-Modal RAG system.
+This module provides functions to call Gemini API with the user's query and the retrieved context.
+"""
+
+# Import built-in modules
+import logging
+import os
+import time
+
+# Import third-party modules
 from google import genai
+
+# Import local modules
+from config import config
+from utils.logger import get_app_logger
+
+# Initialize logger
+logger: logging.Logger = get_app_logger()
 
 
 def call_gemini(query, context_items):
@@ -13,8 +30,7 @@ def call_gemini(query, context_items):
     # We temporarily hide GOOGLE_CLOUD_PROJECT from the actual environment inside this function
     # to prevent the `genai` client from auto-routing to Vertex AI.
     backup_project = os.environ.pop("GOOGLE_CLOUD_PROJECT", None)
-
-    api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = config.GEMINI_API_KEY
     client = genai.Client(api_key=api_key)
 
     if backup_project:
@@ -35,18 +51,43 @@ def call_gemini(query, context_items):
 
         if meta["type"] == "text_document":
             text = meta.get("content", "")
-            # Cap at 50,000 characters per context chunk to prevent giant API requests
             prompt_parts.append(text[:50000])
         elif meta["type"] == "media":
             file_path = meta.get("path")
             if file_path and os.path.exists(file_path):
-                print(f"Uploading {meta['filename']} to Gemini File API...")
+                logger.info(msg=f"Uploading {meta['filename']} to Gemini File API...")
                 try:
-                    # The File API is the most robust way to handle video/audio
                     uploaded_file = client.files.upload(file=file_path)
-                    prompt_parts.append(uploaded_file)
+
+                    # Wait for file to become ACTIVE
+                    while (
+                        uploaded_file.state and uploaded_file.state.name == "PROCESSING"
+                    ):
+                        time.sleep(1)
+                        if uploaded_file.name:
+                            uploaded_file = client.files.get(name=uploaded_file.name)
+                        else:
+                            logger.error(
+                                f"Uploaded file {meta['filename']} has no name"
+                            )
+                            break
+
+                    if uploaded_file.state and uploaded_file.state.name == "ACTIVE":
+                        prompt_parts.append(uploaded_file)
+                    else:
+                        state_name = (
+                            uploaded_file.state.name
+                            if uploaded_file.state
+                            else "UNKNOWN"
+                        )
+                        logger.error(
+                            f"File {meta['filename']} failed to process: {state_name}"
+                        )
+                        prompt_parts.append(
+                            f"(Failed to process media file: {meta['filename']})"
+                        )
                 except Exception as e:
-                    print(f"Could not upload {meta['filename']}: {e}")
+                    logger.error(f"Could not upload {meta['filename']}: {e}")
                     prompt_parts.append(
                         f"(Failed to load media file: {meta['filename']})"
                     )
@@ -58,16 +99,20 @@ def call_gemini(query, context_items):
     prompt_parts.append("--- CONTEXT END ---")
     prompt_parts.append(f"\nUser Query: {query}")
 
-    print("Calling Gemini 2.5 Flash...")
+    logger.info(msg=f"Calling {config.GEMINI_MODEL} model...")
     try:
         # The generate_content function accepts contents parameter
         response = client.models.generate_content(
-            model="gemini-2.5-flash", contents=prompt_parts
+            model=config.GEMINI_MODEL, contents=prompt_parts
         )
+        if response.text:
+            logger.info(msg=f"Assistant response: {response.text[:100]}... (truncated)")
+
         return response.text
     except Exception as e:
-        return f"Error calling Gemini: {e}"
+        logger.error(f"Error calling {config.GEMINI_MODEL} model: {e}")
+        return f"Error calling {config.GEMINI_MODEL} model: {e}"
 
 
 if __name__ == "__main__":
-    print("Initialize LLM Chain.")
+    logger.info(msg="Initialize LLM Chain.")

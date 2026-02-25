@@ -1,3 +1,5 @@
+# src/multi_modal_rag/main.py
+
 """
 Multi-Modal MS Office & Media RAG System
 """

@@ -28,6 +28,9 @@ class Config:
 
     # Google Cloud Project
     GOOGLE_CLOUD_PROJECT: Optional[str] = os.getenv("GOOGLE_CLOUD_PROJECT")
+    GOOGLE_CLOUD_LOCATION: Optional[str] = os.getenv(
+        key="GOOGLE_CLOUD_LOCATION", default="us-central1"
+    )
 
     # Google Gemini API
     GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
