@@ -1,13 +1,22 @@
 """Ingestion module for the Multi-Modal RAG system."""
 
 # Import built-in modules
+import logging
 import os
 import tkinter as tk
+from pathlib import Path
 from tkinter import filedialog
 from typing import Any
 
 # Import third-party modules
 from markitdown import MarkItDown
+
+# Import local modules
+from config import config
+from utils.logger import get_app_logger
+
+# Initialize logger
+logger: logging.Logger = get_app_logger()
 
 
 def select_files():
@@ -16,9 +25,9 @@ def select_files():
     root.withdraw()  # Hide the main tk window
 
     # Try to open in the multi_modal_rag/documents directory if it exists
-    initial_dir = os.path.join(os.getcwd(), "documents")
-    if not os.path.exists(initial_dir):
-        initial_dir = os.getcwd()
+    initial_dir = Path(config.DOCUMENTS_DIR)
+    if not initial_dir.exists():
+        initial_dir = str(config.BASE_DIR)
 
     file_paths = filedialog.askopenfilenames(
         title="Select Documents and Media",
@@ -73,7 +82,7 @@ def process_files(file_paths) -> list[dict[str, Any]]:
                 file_item["type"] = "text_document"
                 processed_items.append(file_item)
             except Exception as e:
-                print(f"Error extracting {path}: {e}")
+                logger.error(msg=f"Error extracting {path}: {e}")
 
         elif ext in media_exts:
             file_item["type"] = "media"
@@ -81,15 +90,17 @@ def process_files(file_paths) -> list[dict[str, Any]]:
             processed_items.append(file_item)
 
         else:
-            print(f"Skipping unsupported file type: {file_item['filename']}")
+            logger.warning(
+                msg=f"Skipping unsupported file type: {file_item['filename']}"
+            )
 
     return processed_items
 
 
 if __name__ == "__main__":
-    print("Please select files...")
+    logger.info("Please select files...")
     files = select_files()
-    print(f"Selected {len(files)} files.")
+    logger.info(f"Selected {len(files)} files.")
 
     items = process_files(files)
     for item in items:
@@ -97,6 +108,6 @@ if __name__ == "__main__":
             preview = (
                 item["content"][:100].replace("\n", " ") if item["content"] else "None"
             )
-            print(f"- [Text] {item['filename']}: {preview}...")
+            logger.info(f"- [Text] {item['filename']}: {preview}...")
         else:
-            print(f"- [Media] {item['filename']}")
+            logger.info(f"- [Media] {item['filename']}")

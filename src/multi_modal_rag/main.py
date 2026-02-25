@@ -3,9 +3,11 @@ Multi-Modal MS Office & Media RAG System
 """
 
 # Import built-in modules
+import logging
 import os
 import threading
 import tkinter as tk
+from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext
 from typing import Any, List, Literal
 
@@ -13,10 +15,18 @@ from typing import Any, List, Literal
 from dotenv import load_dotenv
 
 # Import local modules
+from config import config
 from multi_modal_rag.embedder import get_embedding, init_vertex
 from multi_modal_rag.ingestion import process_files
 from multi_modal_rag.llm_chain import call_gemini
 from multi_modal_rag.vector_store import VectorStore
+from utils.logger import get_app_logger
+
+# Validate configuration
+config.validate_or_exit()
+
+# Initialize logger
+logger: logging.Logger = get_app_logger()
 
 
 class ChatApplication(tk.Tk):
@@ -312,15 +322,19 @@ class ChatApplication(tk.Tk):
 def main():
     """Initializes and runs the RAG GUI application."""
     # Create a sample document for testing
-    os.makedirs("documents", exist_ok=True)
+    documents_dir: Path = Path(config.DOCUMENTS_DIR)
+    documents_dir.mkdir(exist_ok=True)
     with open("documents/sample_document.txt", "w") as f:
         f.write("The first rule of vector databases is persistence.\n\n")
         f.write("The second rule is ensuring your embeddings are consistent.\n\n")
         f.write("Tkinter is a standard GUI toolkit for Python.")
 
+        # Log the creation of the sample document
+        logger.info(msg="Sample document created.")
+
     # Initialize the core components
     store = VectorStore()
-    app = ChatApplication(vector_store=store)
+    app: ChatApplication = ChatApplication(vector_store=store)
     app.mainloop()
 
 

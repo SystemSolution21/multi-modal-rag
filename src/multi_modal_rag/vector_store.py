@@ -1,19 +1,34 @@
-import json
-import os
+# src/multi_modal_rag/vector_store.py
 
+# Import built-in modules
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+# Import third-party modules
 import numpy as np
 
-DB_DIR = "db"
-VECTORS_FILE = os.path.join(DB_DIR, "vectors.npz")
-METADATA_FILE = os.path.join(DB_DIR, "metadata.json")
+# Import local modules
+from config import config
+from utils.logger import get_app_logger
+
+# Initialize logger
+logger: logging.Logger = get_app_logger()
+
+# Vector store constants
+
+DB_DIR: Path = config.DB_DIR
+VECTORS_FILE: Path = Path(DB_DIR / "vectors.npz")
+METADATA_FILE: Path = Path(DB_DIR / "metadata.json")
 
 
 class VectorStore:
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the VectorStore, trying to load an existing DB."""
         self.vectors = []
         self.metadata = []
-        os.makedirs(DB_DIR, exist_ok=True)
+        DB_DIR.mkdir(exist_ok=True)
 
     def load(self):
         """
@@ -22,21 +37,22 @@ class VectorStore:
         Returns:
             bool: True if loaded successfully, False otherwise.
         """
-        if not os.path.exists(VECTORS_FILE) or not os.path.exists(METADATA_FILE):
-            print("No existing database found.")
+        # Check if database files exist
+        if not VECTORS_FILE.exists() or not METADATA_FILE.exists():
+            logger.error(msg="No existing database found.")
             return False
 
         try:
-            print("Loading existing vector database...")
-            data = np.load(VECTORS_FILE)
+            logger.info(msg="Loading existing vector database...")
+            data: Any = np.load(file=VECTORS_FILE)
             self.vectors = data["vectors"].tolist()
             with open(METADATA_FILE, "r", encoding="utf-8") as f:
                 self.metadata = json.load(f)
 
-            print("Database loaded successfully.")
+            logger.info(msg="Database loaded successfully.")
             return True
         except Exception as e:
-            print(f"Error loading database: {e}")
+            logger.error(f"Error loading database: {e}")
             # Reset on failure
             self.vectors = []
             self.metadata = []
@@ -45,19 +61,19 @@ class VectorStore:
     def save(self):
         """Saves the current vector database to the /db directory."""
         if not self.vectors:
-            print("Nothing to save.")
+            logger.warning(msg="Nothing to save.")
             return
 
-        print("Saving vector database...")
+        logger.info(msg="Saving vector database...")
         try:
             np.savez_compressed(VECTORS_FILE, vectors=np.array(self.vectors))
             with open(METADATA_FILE, "w", encoding="utf-8") as f:
                 json.dump(self.metadata, f, indent=4)
-            print("Database saved successfully.")
+            logger.info(msg="Database saved successfully.")
         except Exception as e:
-            print(f"Error saving database: {e}")
+            logger.error(f"Error saving database: {e}")
 
-    def add(self, embedding, metadata):
+    def add(self, embedding, metadata) -> None:
         """
         Adds a single embedded vector and its related metadata.
         """
