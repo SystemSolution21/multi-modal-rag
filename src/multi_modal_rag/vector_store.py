@@ -49,7 +49,7 @@ class VectorStore:
             return False
 
         try:
-            logger.info(msg="Loading existing vector database...")
+            logger.info(msg="Loading existing vector database.....")
             data: Any = np.load(file=VECTORS_FILE)
             self.vectors = data["vectors"].tolist()
             with open(METADATA_FILE, "r", encoding="utf-8") as f:
@@ -70,7 +70,7 @@ class VectorStore:
             logger.warning(msg="Nothing to save.")
             return
 
-        logger.info(msg="Saving vector database...")
+        logger.info(msg="Saving vector database.....")
         try:
             np.savez_compressed(VECTORS_FILE, vectors=np.array(self.vectors))
             with open(METADATA_FILE, "w", encoding="utf-8") as f:

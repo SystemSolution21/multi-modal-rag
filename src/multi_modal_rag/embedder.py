@@ -80,9 +80,11 @@ def get_embedding(item):
     model = MultiModalEmbeddingModel.from_pretrained("multimodalembedding@001")
 
     if item["type"] == "text_document" and item["content"]:
+        logger.info(f"Embedding file: {item['filename']} .....")
         text = item["content"][:30000]
         embeddings = model.get_embeddings(contextual_text=text)
         if embeddings.text_embedding:
+            logger.info(f"File embedded: {item['filename']}")
             return embeddings.text_embedding
         else:
             return None
@@ -91,29 +93,36 @@ def get_embedding(item):
         ext = Path(item["path"]).suffix.lower()
 
         if ext in {".png", ".jpg", ".jpeg"}:
+            logger.info(f"Embedding image file: {item['filename']} .....")
             img = Image.load_from_file(item["path"])
             embeddings = model.get_embeddings(image=img)
             if embeddings.image_embedding:
+                logger.info(f"Image file embedded: {item['filename']}")
                 return embeddings.image_embedding
             else:
                 return None
 
         elif ext == ".mp4":
+            logger.info(f"Embedding video file: {item['filename']} .....")
             video = Video.load_from_file(item["path"])
             embeddings = model.get_embeddings(video=video)
             if embeddings.video_embeddings:
+                logger.info(f"Video file embedded: {item['filename']}")
                 return embeddings.video_embeddings[0].embedding
             else:
                 return None
 
         elif ext in {".mp3", ".wav"}:
             # Transcribe audio to text, then embed
-            logger.info(f"Transcribing audio file: {item['filename']}")
+            logger.info(f"Transcribing audio file: {item['filename']} .....")
             transcript = transcribe_audio(item["path"])
 
             if transcript:
                 embeddings = model.get_embeddings(contextual_text=transcript)
                 if embeddings.text_embedding:
+                    logger.info(
+                        msg=f"Audio file transcribed and embedded: {item['filename']}"
+                    )
                     return embeddings.text_embedding
                 else:
                     return None

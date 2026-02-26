@@ -55,7 +55,7 @@ def call_gemini(query, context_items):
         elif meta["type"] == "media":
             file_path = meta.get("path")
             if file_path and os.path.exists(file_path):
-                logger.info(msg=f"Uploading {meta['filename']} to Gemini File API...")
+                logger.info(msg=f"Uploading {meta['filename']} to Gemini File API.....")
                 try:
                     uploaded_file = client.files.upload(file=file_path)
 
@@ -99,14 +99,16 @@ def call_gemini(query, context_items):
     prompt_parts.append("--- CONTEXT END ---")
     prompt_parts.append(f"\nUser Query: {query}")
 
-    logger.info(msg=f"Calling {config.GEMINI_MODEL} model...")
+    logger.info(msg=f"Calling {config.GEMINI_MODEL} model.....")
     try:
         # The generate_content function accepts contents parameter
         response = client.models.generate_content(
             model=config.GEMINI_MODEL, contents=prompt_parts
         )
         if response.text:
-            logger.info(msg=f"Assistant response: {response.text[:50]}... (truncated)")
+            logger.info(
+                msg=f"Assistant response: {response.text[:50]}..... (truncated)"
+            )
 
         return response.text
     except Exception as e:

@@ -53,6 +53,16 @@ class ChatApplication(tk.Tk):
         # Attempt to load DB on startup
         self.after(ms=100, func=self.initial_load)
 
+        # Register cleanup on window close
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def on_closing(self) -> None:
+        """Handle application shutdown."""
+        logger.info(msg="Application closing.....")
+        self.vector_store.save()
+        logger.info(msg="Application closed successfully.")
+        self.destroy()
+
     def create_widgets(self) -> None:
         # Main frame
         main_frame = tk.Frame(master=self, bg="#2d2d2d")
@@ -118,7 +128,7 @@ class ChatApplication(tk.Tk):
         """
         Load existing vector database.
         """
-        self.status_label.config(text="Checking for existing database...")
+        self.status_label.config(text="Checking for existing database.....")
         if self.vector_store.load():
             self.status_label.config(
                 text=f"DB Loaded. {len(self.vector_store.metadata)} chunks."
@@ -161,7 +171,7 @@ class ChatApplication(tk.Tk):
         if not file_paths:
             return
 
-        self.status_label.config(text="Processing files (this may take time)...")
+        self.status_label.config(text="Processing files (this may take time).....")
         self.load_button.config(state="disabled")
 
         # Run processing in background thread
@@ -181,7 +191,7 @@ class ChatApplication(tk.Tk):
                 self.after(
                     ms=0,
                     func=lambda name=item["filename"]: self.status_label.config(
-                        text=f"Embedding {name}..."
+                        text=f"Embedding {name}....."
                     ),
                 )
 
@@ -354,21 +364,33 @@ class ChatApplication(tk.Tk):
 
 def main():
     """Initializes and runs the RAG GUI application."""
-    # Create a sample document for testing
-    documents_dir: Path = Path(config.DOCUMENTS_DIR)
-    documents_dir.mkdir(exist_ok=True)
-    with open("documents/sample_document.txt", "w") as f:
-        f.write("The first rule of vector databases is persistence.\n\n")
-        f.write("The second rule is ensuring your embeddings are consistent.\n\n")
-        f.write("Tkinter is a standard GUI toolkit for Python.")
+    store = None
+    try:
+        # Create a sample document for testing
+        documents_dir: Path = Path(config.DOCUMENTS_DIR)
+        documents_dir.mkdir(exist_ok=True)
+        with open("documents/sample_document.txt", "w") as f:
+            f.write("The first rule of vector databases is persistence.\n\n")
+            f.write("The second rule is ensuring your embeddings are consistent.\n\n")
+            f.write("Tkinter is a standard GUI toolkit for Python.")
 
         # Log the creation of the sample document
         logger.info(msg="Sample document created.")
 
-    # Initialize the core components
-    store = VectorStore()
-    app: ChatApplication = ChatApplication(vector_store=store)
-    app.mainloop()
+        # Initialize the core components
+        store = VectorStore()
+        app: ChatApplication = ChatApplication(vector_store=store)
+        logger.info(msg="Application started successfully.")
+        app.mainloop()
+
+    except KeyboardInterrupt:
+        logger.info(msg="Keyboard interrupt received. Shutting down.....")
+        if store is not None:
+            store.save()
+        logger.info(msg="Application terminated by user.")
+    except Exception as e:
+        logger.error(msg=f"Unexpected error: {e}")
+        raise
 
 
 if __name__ == "__main__":

@@ -81,7 +81,7 @@ def process_files(file_paths) -> list[dict[str, Any]]:
         if ext in office_pdf_exts:
             try:
                 logger.info(
-                    msg=f"Extracting text from {file_item['filename']} via MarkItDown..."
+                    msg=f"Extracting text from {file_item['filename']} via MarkItDown....."
                 )
                 result = md.convert(path)
                 file_item["content"] = result.text_content
