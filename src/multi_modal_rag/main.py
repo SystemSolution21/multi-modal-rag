@@ -281,28 +281,42 @@ class ChatApplication(tk.Tk):
 
         results = self.vector_store.search(query_emb, top_k=10)
 
-        # If query mentions specific media types, boost those media files
-        media_keywords: dict[str, list[str]] = {
-            "video": [".mp4"],
-            "audio": [".mp3", ".wav"],
-            "image": [".jpg", ".jpeg", ".png"],
-        }
+        # Filter results: if a specific filename is mentioned, only include that file
+        mentioned_files = [
+            m
+            for m in self.vector_store.metadata
+            if m.get("filename", "").lower() in prompt.lower()
+        ]
 
-        for keyword, extensions in media_keywords.items():
-            if keyword in prompt.lower():
-                matching_media = [
-                    m
-                    for m in self.vector_store.metadata
-                    if m.get("type") == "media"
-                    and any(m.get("path", "").endswith(ext) for ext in extensions)
-                ]
-                results.extend(
-                    [
-                        {"metadata": m}
-                        for m in matching_media
-                        if m not in [r["metadata"] for r in results]
+        if mentioned_files:
+            # User mentioned specific files, prioritize those
+            results = [{"metadata": m, "score": 1.0} for m in mentioned_files]
+        else:
+            # Check if user mentions a media type (audio, video, image)
+            media_type_map = {
+                "audio": [".mp3", ".wav"],
+                "video": [".mp4"],
+                "image": [".jpg", ".jpeg", ".png"],
+            }
+
+            for media_type, extensions in media_type_map.items():
+                if media_type in prompt.lower():
+                    type_files = [
+                        m
+                        for m in self.vector_store.metadata
+                        if m.get("type") == "media"
+                        and any(m.get("path", "").endswith(ext) for ext in extensions)
                     ]
-                )
+                    if type_files:
+                        results = [{"metadata": m, "score": 1.0} for m in type_files]
+                        break
+
+        # Debugging: Print the results
+        print("=================================")
+        print(f"Prompt: {prompt}")
+        for result in results:
+            print(f"Result: {result['metadata']['filename']}")
+        print("=================================")
 
         response = call_gemini(prompt, results)
         self.after(0, self.display_response, response)
