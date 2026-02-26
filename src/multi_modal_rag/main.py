@@ -203,7 +203,10 @@ class ChatApplication(tk.Tk):
                             "type": "text_document",
                             "content": chunk,
                             "path": item["path"],
-                            "filename": f"{item['filename']}_part{i + 1}",
+                            "filename": item["filename"],  # Keep original filename
+                            "original_filename": item["filename"],  # Store original
+                            "chunk_index": i + 1,  # Add chunk index
+                            "total_chunks": len(chunks),  # Add total chunks
                         }
                         emb = get_embedding(item=chunk_item)
                         if emb is not None:
