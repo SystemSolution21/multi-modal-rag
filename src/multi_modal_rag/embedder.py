@@ -68,7 +68,7 @@ def transcribe_audio(file_path):
 
         return transcript if transcript else None
     except Exception as e:
-        logger.error(msg=f"Error transcribing audio {file_path}: {e}")
+        logger.error(msg=f"Error transcribing audio {Path(file_path).name}: {e}")
         return None
 
 
@@ -108,7 +108,7 @@ def get_embedding(item):
 
         elif ext in {".mp3", ".wav"}:
             # Transcribe audio to text, then embed
-            logger.info(f"Transcribing audio file: {item['path']}")
+            logger.info(f"Transcribing audio file: {item['filename']}")
             transcript = transcribe_audio(item["path"])
 
             if transcript:
@@ -118,7 +118,7 @@ def get_embedding(item):
                 else:
                     return None
             else:
-                logger.error(msg=f"Could not transcribe audio: {item['path']}")
+                logger.error(msg=f"Could not transcribe audio: {item['filename']}")
                 return None
 
         else:

@@ -106,7 +106,7 @@ def call_gemini(query, context_items):
             model=config.GEMINI_MODEL, contents=prompt_parts
         )
         if response.text:
-            logger.info(msg=f"Assistant response: {response.text[:100]}... (truncated)")
+            logger.info(msg=f"Assistant response: {response.text[:50]}... (truncated)")
 
         return response.text
     except Exception as e:

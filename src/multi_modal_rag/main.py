@@ -281,21 +281,28 @@ class ChatApplication(tk.Tk):
 
         results = self.vector_store.search(query_emb, top_k=10)
 
-        # If query mentions media types, include all media files
-        if any(
-            word in prompt.lower()
-            for word in ["video", "audio", "image", "mp4", "mp3", "jpg", "png"]
-        ):
-            media_items = [
-                m for m in self.vector_store.metadata if m.get("type") == "media"
-            ]
-            results.extend(
-                [
-                    {"metadata": m}
-                    for m in media_items
-                    if m not in [r["metadata"] for r in results]
+        # If query mentions specific media types, boost those media files
+        media_keywords: dict[str, list[str]] = {
+            "video": [".mp4"],
+            "audio": [".mp3", ".wav"],
+            "image": [".jpg", ".jpeg", ".png"],
+        }
+
+        for keyword, extensions in media_keywords.items():
+            if keyword in prompt.lower():
+                matching_media = [
+                    m
+                    for m in self.vector_store.metadata
+                    if m.get("type") == "media"
+                    and any(m.get("path", "").endswith(ext) for ext in extensions)
                 ]
-            )
+                results.extend(
+                    [
+                        {"metadata": m}
+                        for m in matching_media
+                        if m not in [r["metadata"] for r in results]
+                    ]
+                )
 
         response = call_gemini(prompt, results)
         self.after(0, self.display_response, response)
