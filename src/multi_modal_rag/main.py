@@ -270,55 +270,62 @@ class ChatApplication(tk.Tk):
     def process_in_background(self, prompt) -> None:
         """
         Processes the user's prompt in the background.
+        Uses hybrid search: keyword matching + semantic search.
         """
-        query_item = {
-            "type": "text_document",
-            "content": prompt,
-            "path": "query",
-            "filename": "query",
-        }
-        query_emb = get_embedding(query_item)
-
-        results = self.vector_store.search(query_emb, top_k=10)
-
-        # Filter results: if a specific filename is mentioned, only include that file
+        # Step 1: Check for explicit filename mentions
         mentioned_files = [
             m
             for m in self.vector_store.metadata
             if m.get("filename", "").lower() in prompt.lower()
+            or Path(m.get("path", "")).stem.lower() in prompt.lower()
         ]
 
         if mentioned_files:
-            # User mentioned specific files, prioritize those
             results = [{"metadata": m, "score": 1.0} for m in mentioned_files]
         else:
-            # Check if user mentions a media type (audio, video, image)
-            media_type_map = {
+            # Step 2: Check for media type keywords
+            media_keywords = {
                 "audio": [".mp3", ".wav"],
                 "video": [".mp4"],
                 "image": [".jpg", ".jpeg", ".png"],
             }
 
-            for media_type, extensions in media_type_map.items():
-                if media_type in prompt.lower():
-                    type_files = [
-                        m
+            for keyword, exts in media_keywords.items():
+                if keyword in prompt.lower():
+                    results = [
+                        {"metadata": m, "score": 1.0}
                         for m in self.vector_store.metadata
                         if m.get("type") == "media"
-                        and any(m.get("path", "").endswith(ext) for ext in extensions)
+                        and any(m.get("path", "").endswith(e) for e in exts)
                     ]
-                    if type_files:
-                        results = [{"metadata": m, "score": 1.0} for m in type_files]
-                        break
+                    break
+            else:
+                # Step 3: Fall back to semantic search
+                query_item = {
+                    "type": "text_document",
+                    "content": prompt,
+                    "path": "query",
+                    "filename": "query",
+                }
+                query_emb = get_embedding(query_item)
+                results = self.vector_store.search(query_emb, top_k=5)
 
-        # Debugging: Print the results
+        # Remove duplicates
+        seen_paths = set()
+        unique_results = []
+        for r in results:
+            path = r["metadata"].get("path")
+            if path not in seen_paths:
+                seen_paths.add(path)
+                unique_results.append(r)
+
         print("=================================")
         print(f"Prompt: {prompt}")
-        for result in results:
+        for result in unique_results:
             print(f"Result: {result['metadata']['filename']}")
         print("=================================")
 
-        response = call_gemini(prompt, results)
+        response = call_gemini(prompt, unique_results)
         self.after(0, self.display_response, response)
 
     def display_response(self, response) -> None:
