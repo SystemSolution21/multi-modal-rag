@@ -1,29 +1,54 @@
-# Python-generated files
+# Python
 __pycache__/
-*.py[oc]
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.spec
 build/
 dist/
-wheels/
-*.egg-info
 
-# Virtual environments
-.venv
-
-# Environment variables
+# Environment
 .env
+.venv/
+venv/
 
-# Vector database
-db/*
-!.gitkeep
+# Database
+db/
+*.npz
+*.json
+
+# Logs
+logs/
+*.log
 
 # Documents
-documents/*
-!.gitkeep
-!sample_document.txt
+documents/
 
-# logs
-logs/*
-!.gitkeep
+# Package
+MultiModalRAG-Package/
+*.zip
 
-# Todo
-ToDo.md
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
