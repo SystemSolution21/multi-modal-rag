@@ -77,11 +77,19 @@ def get_embedding(item):
     Takes a processed item from ingestion.py and returns a 1408-dimensional embedding.
     Supports text, images, video, and audio (via transcription).
     """
-    model = MultiModalEmbeddingModel.from_pretrained("multimodalembedding@001")
+    model = MultiModalEmbeddingModel.from_pretrained(config.VERTEX_AI_MODEL)
 
     if item["type"] == "text_document" and item["content"]:
         logger.info(f"Embedding file: {item['filename']} .....")
-        text = item["content"][:30000]
+        text = item["content"]
+
+        # Limit by bytes (not characters) to handle multi-byte characters like Japanese
+        max_bytes = 900  # Stay under 1024 byte limit
+        encoded = text.encode("utf-8")[:max_bytes]
+        text = encoded.decode(
+            "utf-8", errors="ignore"
+        )  # Decode back, ignoring incomplete chars
+
         embeddings = model.get_embeddings(contextual_text=text)
         if embeddings.text_embedding:
             logger.info(f"File embedded: {item['filename']}")

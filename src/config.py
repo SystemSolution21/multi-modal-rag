@@ -42,6 +42,10 @@ class Config:
     GEMINI_TOP_K: int = int(os.getenv("GEMINI_TOP_K") or 64)
     GEMINI_MAX_OUTPUT_TOKENS: int = int(os.getenv("GEMINI_MAX_OUTPUT_TOKENS") or 8192)
 
+    # Vertex AI Model Configuration
+    VERTEX_AI_MODEL: str = os.getenv("VERTEX_AI_MODEL", "multimodalembedding@001")
+    VERTEX_AI_TOP_K: int = int(os.getenv("VERTEX_AI_TOP_K") or 3)
+
     # File Upload
     MAX_FILE_SIZE_MB: int = int(os.getenv("MAX_FILE_SIZE_MB") or 20)
     UPLOAD_TIMEOUT: int = int(os.getenv("UPLOAD_TIMEOUT") or 180)

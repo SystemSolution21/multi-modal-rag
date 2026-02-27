@@ -202,7 +202,7 @@ class ChatApplication(tk.Tk):
 
                 elif item["type"] == "text_document" and item["content"]:
                     text = item["content"]
-                    chunk_size = 1000
+                    chunk_size = 700  # Conservative limit for multi-byte characters
                     chunks = [
                         text[i : i + chunk_size]
                         for i in range(0, len(text), chunk_size)
@@ -213,10 +213,10 @@ class ChatApplication(tk.Tk):
                             "type": "text_document",
                             "content": chunk,
                             "path": item["path"],
-                            "filename": item["filename"],  # Keep original filename
-                            "original_filename": item["filename"],  # Store original
-                            "chunk_index": i + 1,  # Add chunk index
-                            "total_chunks": len(chunks),  # Add total chunks
+                            "filename": item["filename"],
+                            "original_filename": item["filename"],
+                            "chunk_index": i + 1,
+                            "total_chunks": len(chunks),
                         }
                         emb = get_embedding(item=chunk_item)
                         if emb is not None:
@@ -239,6 +239,7 @@ class ChatApplication(tk.Tk):
                 func=lambda: self.status_label.config(text="Error during loading."),
             )
             self.after(ms=0, func=lambda: self.load_button.config(state="normal"))
+            logger.error(msg=f"Error loading files: {error_msg}")
 
     def finish_loading(self, count) -> None:
         """
@@ -321,7 +322,9 @@ class ChatApplication(tk.Tk):
                     "filename": "query",
                 }
                 query_emb = get_embedding(query_item)
-                results = self.vector_store.search(query_emb, top_k=5)
+                results = self.vector_store.search(
+                    query_emb, top_k=config.VERTEX_AI_TOP_K
+                )
 
         # Remove duplicates
         seen_paths = set()

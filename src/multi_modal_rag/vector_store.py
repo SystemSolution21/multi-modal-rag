@@ -94,7 +94,7 @@ class VectorStore:
         self.metadata.append(metadata)
         self.save()
 
-    def search(self, query_embedding, top_k=3):
+    def search(self, query_embedding, top_k):
         """
         Performs Cosine Similarity search over the stored vectors.
         """
