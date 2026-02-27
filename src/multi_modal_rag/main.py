@@ -335,11 +335,11 @@ class ChatApplication(tk.Tk):
                 seen_paths.add(path)
                 unique_results.append(r)
 
-        print("=================================")
-        print(f"Prompt: {prompt}")
-        for result in unique_results:
-            print(f"Result: {result['metadata']['filename']}")
-        print("=================================")
+        # print("=================================")
+        # print(f"Prompt: {prompt}")
+        # for result in unique_results:
+        #     print(f"Result: {result['metadata']['filename']}")
+        # print("=================================")
 
         response = call_gemini(prompt, unique_results)
         self.after(0, self.display_response, response)

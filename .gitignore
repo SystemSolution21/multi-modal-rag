@@ -38,9 +38,12 @@ db/
 # Logs
 logs/
 *.log
+!logs/.gitkeep
 
 # Documents
-documents/
+documents/*
+!documents/.gitkeep
+!documents/sample_document.txt
 
 # Package
 MultiModalRAG-Package/
