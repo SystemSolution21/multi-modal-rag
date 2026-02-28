@@ -25,9 +25,17 @@ Write-Host "Activating virtual environment..." -ForegroundColor Yellow
 Write-Host "Ensuring PyInstaller is installed..." -ForegroundColor Yellow
 uv pip install pyinstaller
 
-# Build executable using absolute path to spec
+# Build executable - use relative path from project root
 Write-Host "Building executable..." -ForegroundColor Yellow
-$specFile = Join-Path $PSScriptRoot "build.spec"
+$specFile = "scripts\build.spec"
+
+if (-not (Test-Path $specFile)) {
+    Write-Host "✗ Spec file not found: $specFile" -ForegroundColor Red
+    Write-Host "Current directory: $(Get-Location)" -ForegroundColor Yellow
+    Write-Host "Looking for: $((Resolve-Path $specFile -ErrorAction SilentlyContinue))" -ForegroundColor Yellow
+    exit 1
+}
+
 pyinstaller --clean $specFile
 
 if ($LASTEXITCODE -eq 0) {
@@ -40,5 +48,6 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "`nBuild failed!" -ForegroundColor Red
     exit 1
 }
+
 
 
