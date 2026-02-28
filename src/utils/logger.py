@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional
 
 # Import custom modules
-from config import config
+import config
 
 
 def setup_logger(
@@ -53,7 +53,7 @@ def setup_logger(
     # Add file handler if log_file is specified
     if log_file:
         # Ensure logs directory exists
-        logs_dir = Path(config.LOGS_DIR)
+        logs_dir: Path = config.LOGS_DIR
         logs_dir.mkdir(exist_ok=True)
 
         log_path = logs_dir / log_file

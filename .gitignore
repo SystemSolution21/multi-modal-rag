@@ -4,9 +4,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -20,15 +18,17 @@ wheels/
 .installed.cfg
 *.egg
 
-# PyInstaller
+# PyInstaller output (not scripts directory)
 *.spec
 build/
 dist/
 
-# Environment
-.env
+# Virtual Environment
 .venv/
 venv/
+
+# Environment Variables
+.env
 
 # Database
 db/
@@ -38,20 +38,30 @@ db/
 # Logs
 logs/
 *.log
-!logs/.gitkeep
 
 # Documents
 documents/*
-!documents/.gitkeep
-!documents/sample_document.txt
 
 # Package
-MultiModalRAG-Package/
+MultiModalRAG-Package-*/
 *.zip
+*.tar.gz
+
+# Docker
+MultiModalRAG-Docker-*/
+*.tar
+*.tar.gz
+
+# Executables
+MultiModalRAG-Windows-x64/
+MultiModalRAG-macOS/
+MultiModalRAG-Linux/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+
+
 

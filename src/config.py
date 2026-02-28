@@ -7,90 +7,66 @@ for the application.
 """
 
 # imports built-in modules
-import logging
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
-# imports third-party modules
 from dotenv import load_dotenv
 
-# Basic logger to avoid circular import with src.utils.logger
-logger: logging.Logger = logging.getLogger()
-
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
 
-class Config:
-    """Application configuration loaded from environment variables."""
-
-    # Google Cloud Project
-    GOOGLE_CLOUD_PROJECT: Optional[str] = os.getenv("GOOGLE_CLOUD_PROJECT")
-    GOOGLE_CLOUD_LOCATION: Optional[str] = os.getenv(
-        key="GOOGLE_CLOUD_LOCATION", default="us-central1"
-    )
-
-    # Google Gemini API
-    GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
-
-    # Gemini Model Configuration
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-    GEMINI_TEMPERATURE: float = float(os.getenv("GEMINI_TEMPERATURE") or 1.0)
-    GEMINI_TOP_P: float = float(os.getenv("GEMINI_TOP_P") or 0.95)
-    GEMINI_TOP_K: int = int(os.getenv("GEMINI_TOP_K") or 64)
-    GEMINI_MAX_OUTPUT_TOKENS: int = int(os.getenv("GEMINI_MAX_OUTPUT_TOKENS") or 8192)
-
-    # Vertex AI Model Configuration
-    VERTEX_AI_MODEL: str = os.getenv("VERTEX_AI_MODEL", "multimodalembedding@001")
-    VERTEX_AI_TOP_K: int = int(os.getenv("VERTEX_AI_TOP_K") or 3)
-
-    # File Upload
-    MAX_FILE_SIZE_MB: int = int(os.getenv("MAX_FILE_SIZE_MB") or 20)
-    UPLOAD_TIMEOUT: int = int(os.getenv("UPLOAD_TIMEOUT") or 180)
-
-    # Paths
-    BASE_DIR: Path = Path(__file__).parent.parent.resolve()
-    DOCUMENTS_DIR: Path = BASE_DIR / "documents"
-    LOGS_DIR: Path = BASE_DIR / "logs"
-    DB_DIR: Path = BASE_DIR / "db"
-
-    @classmethod
-    def validate(cls) -> bool:
-        """Validate required configuration.
-
-        Returns
-        -------
-        bool
-            True if all required configuration is present.
-
-        Raises
-        ------
-        SystemExit
-            If required configuration is missing.
-        """
-        errors = []
-
-        if not cls.GEMINI_API_KEY:
-            errors.append("GOOGLE_API_KEY environment variable not set")
-
-        if not cls.GOOGLE_CLOUD_PROJECT:
-            errors.append("GOOGLE_CLOUD_PROJECT environment variable not set")
-
-        if errors:
-            for error in errors:
-                logger.error(f"❌ Configuration Error: {error}")
-            return False
-
-        return True
-
-    @classmethod
-    def validate_or_exit(cls) -> None:
-        """Validate configuration and exit if invalid."""
-        if not cls.validate():
-            sys.exit(1)
+def get_base_path() -> Path:
+    """Get base path for both development and executable."""
+    if getattr(sys, "frozen", False):
+        # Running as executable
+        return Path(sys.executable).parent
+    else:
+        # Running as script
+        return Path(__file__).parent.parent
 
 
-# Create a singleton instance for easy access
-config = Config()
+# Base directory
+BASE_DIR: Path = get_base_path()
+
+# Google Cloud configurations
+GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+
+# Gemini API configurations
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-exp")
+GEMINI_TEMPERATURE = float(os.getenv("GEMINI_TEMPERATURE", "1"))
+GEMINI_TOP_P = float(os.getenv("GEMINI_TOP_P", "0.95"))
+GEMINI_TOP_K = int(os.getenv("GEMINI_TOP_K", "64"))
+GEMINI_MAX_OUTPUT_TOKENS = int(os.getenv("GEMINI_MAX_OUTPUT_TOKENS", "8192"))
+
+# Vertex AI configurations
+VERTEX_AI_MODEL = os.getenv("VERTEX_AI_MODEL", "multimodalembedding@001")
+VERTEX_AI_TOP_K = int(os.getenv("VERTEX_AI_TOP_K", "3"))
+
+# File upload configurations
+MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "20"))
+UPLOAD_TIMEOUT = int(os.getenv("UPLOAD_TIMEOUT", "180"))
+
+# Directory configurations (relative to executable/script location)
+DOCUMENTS_DIR: Path = BASE_DIR / "documents"
+DB_DIR: Path = BASE_DIR / "db"
+LOGS_DIR: Path = BASE_DIR / "logs"
+
+# Create directories if they don't exist
+DOCUMENTS_DIR.mkdir(exist_ok=True)
+DB_DIR.mkdir(exist_ok=True)
+LOGS_DIR.mkdir(exist_ok=True)
+
+
+def validate_or_exit() -> None:
+    """Validate required configurations."""
+    if not GOOGLE_CLOUD_PROJECT:
+        print("Error: GOOGLE_CLOUD_PROJECT not set in .env file")
+        sys.exit(1)
+
+    if not GEMINI_API_KEY:
+        print("Error: GEMINI_API_KEY not set in .env file")
+        sys.exit(1)

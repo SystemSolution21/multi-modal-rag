@@ -16,7 +16,7 @@ from typing import Any
 from markitdown import MarkItDown
 
 # Import local modules
-from config import config
+import config
 from utils.logger import get_app_logger
 
 # Initialize logger

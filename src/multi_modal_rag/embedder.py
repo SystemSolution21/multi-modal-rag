@@ -14,7 +14,7 @@ from google.cloud import speech_v1
 from vertexai.vision_models import Image, MultiModalEmbeddingModel, Video
 
 # Import local modules
-from config import config
+import config
 from utils.logger import get_app_logger
 
 # Initialize logger

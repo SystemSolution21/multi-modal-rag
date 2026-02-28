@@ -47,3 +47,85 @@ This is a simple a multi-modal RAG system that can handle MS Office documents, P
 4. Run `gcloud config set project <your-project-id>` to set your Google Cloud project.
 5. Run `gcloud services enable speech.googleapis.com` to enable the Speech API.
 6. Run `uv run multi-modal-rag` to start the application.
+
+## Distribution Options
+
+### 1. Native Executables (PyInstaller)
+
+- ✅ No dependencies required
+- ✅ Fast startup
+- ⚠️ Must build on each platform
+- 📦 ~150-200MB per platform
+
+**Build:** See [BUILD.md](BUILD.md)
+
+### 2. Docker (Recommended for Cross-Platform)
+
+- ✅ True cross-platform (one image for all)
+- ✅ Consistent environment
+- ✅ Easy updates
+- ⚠️ Requires Docker
+- 📦 ~500MB compressed
+
+**Build:** See [DOCKER.md](DOCKER.md)
+
+### 3. Python Package (For Developers)
+
+- ✅ Smallest size
+- ✅ Easy to modify
+- ⚠️ Requires Python 3.13+
+- 📦 ~50MB
+
+**Install:** `uv sync && uv run multi-modal-rag`
+
+## Quick Start
+
+### Docker (All Platforms)
+
+```bash
+# Pull and run
+docker pull ghcr.io/yourusername/multi-modal-rag:latest
+docker run -it --rm -v $(pwd)/.env:/app/.env multimodal-rag:latest
+
+# Or use docker-compose
+docker compose up
+```
+
+### Native Executable
+
+```bash
+# Download from releases
+# Extract and run:
+
+# Windows
+MultiModalRAG.exe
+
+# macOS
+open MultiModalRAG.app
+
+# Linux
+./MultiModalRAG
+```
+
+### Python Development
+
+```bash
+uv sync
+uv run multi-modal-rag
+```
+
+## Documentation
+
+- [BUILD.md](BUILD.md) - Build native executables
+- [DOCKER.md](DOCKER.md) - Docker distribution guide
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Development guide
+
+## Supported Platforms
+
+| Platform | Docker | Native Exe | Python |
+|----------|--------|------------|--------|
+| Windows 10/11 | ✅ | ✅ | ✅ |
+| macOS (Intel) | ✅ | ✅ | ✅ |
+| macOS (Apple Silicon) | ✅ | ✅ | ✅ |
+| Linux (x86_64) | ✅ | ✅ | ✅ |
+| Linux (ARM64) | ✅ | ⚠️ | ✅ |

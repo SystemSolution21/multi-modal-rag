@@ -13,7 +13,7 @@ import time
 from google import genai
 
 # Import local modules
-from config import config
+import config
 from utils.logger import get_app_logger
 
 # Initialize logger

@@ -7,6 +7,7 @@ Multi-Modal MS Office & Media RAG System
 # Import built-in modules
 import logging
 import os
+import sys
 import threading
 import tkinter as tk
 from pathlib import Path
@@ -17,7 +18,7 @@ from typing import Any, List, Literal
 from dotenv import load_dotenv
 
 # Import local modules
-from config import config
+import config
 from multi_modal_rag.embedder import get_embedding, init_vertex
 from multi_modal_rag.ingestion import process_files
 from multi_modal_rag.llm_chain import call_gemini
@@ -29,6 +30,21 @@ config.validate_or_exit()
 
 # Initialize logger
 logger: logging.Logger = get_app_logger()
+
+
+def get_base_path() -> Path:
+    """
+    Get the base path for the application.
+    Works for both development and PyInstaller executables.
+    """
+    if getattr(sys, "frozen", False):
+        # Running as compiled executable
+        # Use the directory where the executable is located
+        return Path(sys.executable).parent
+    else:
+        # Running as script
+        # Use the project root (parent of src/)
+        return Path(__file__).parent.parent.parent
 
 
 class ChatApplication(tk.Tk):
@@ -44,7 +60,7 @@ class ChatApplication(tk.Tk):
         load_dotenv()
         init_vertex()
 
-        self.title(string="Gemini Multi-Modal RAG System")
+        self.title(string="Multi-Modal RAG System")
         self.geometry(newGeometry="800x600")
 
         self.configure(bg="#2d2d2d")
@@ -369,16 +385,23 @@ def main():
     """Initializes and runs the RAG GUI application."""
     store = None
     try:
-        # Create a sample document for testing
-        documents_dir: Path = Path(config.DOCUMENTS_DIR)
-        documents_dir.mkdir(exist_ok=True)
-        with open("documents/sample_document.txt", "w") as f:
-            f.write("The first rule of vector databases is persistence.\n\n")
-            f.write("The second rule is ensuring your embeddings are consistent.\n\n")
-            f.write("Tkinter is a standard GUI toolkit for Python.")
+        # Get base path (works for both dev and exe)
+        base_path = get_base_path()
 
-        # Log the creation of the sample document
-        logger.info(msg="Sample document created.")
+        # Create documents directory relative to executable/script location
+        documents_dir = base_path / "documents"
+        documents_dir.mkdir(exist_ok=True)
+
+        # Create sample document
+        sample_doc = documents_dir / "sample_document.txt"
+        if not sample_doc.exists():
+            with open(sample_doc, "w", encoding="utf-8") as f:
+                f.write("The first rule of vector databases is persistence.\n\n")
+                f.write(
+                    "The second rule is ensuring your embeddings are consistent.\n\n"
+                )
+                f.write("Tkinter is a standard GUI toolkit for Python.")
+            logger.info(msg="Sample document created.")
 
         # Initialize the core components
         store = VectorStore()

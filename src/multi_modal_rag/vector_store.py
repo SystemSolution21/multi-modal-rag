@@ -16,7 +16,7 @@ from typing import Any
 import numpy as np
 
 # Import local modules
-from config import config
+import config
 from utils.logger import get_app_logger
 
 # Initialize logger
@@ -25,8 +25,8 @@ logger: logging.Logger = get_app_logger()
 # Vector store constants
 
 DB_DIR: Path = config.DB_DIR
-VECTORS_FILE: Path = Path(DB_DIR / "vectors.npz")
-METADATA_FILE: Path = Path(DB_DIR / "metadata.json")
+VECTORS_FILE: Path = DB_DIR / "vectors.npz"
+METADATA_FILE: Path = DB_DIR / "metadata.json"
 
 
 class VectorStore:
