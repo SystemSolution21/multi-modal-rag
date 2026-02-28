@@ -19,7 +19,6 @@ wheels/
 *.egg
 
 # PyInstaller output (not scripts directory)
-*.spec
 build/
 dist/
 
